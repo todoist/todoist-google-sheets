@@ -24,6 +24,7 @@ To tailor your dev environment, create a `.env` file and put in the relevant set
 -   `DB_USERNAME`: Database username
 -   `DB_PASSWORD`: Database password
 -   `DB_ENCRYPTION_KEY`: The db is encrypting sensitive columns, provide the key here.
+-   `DB_ENCRYPTION_FALLBACK_KEY` (optional): A second key used only to decrypt, while `DB_ENCRYPTION_KEY` is being rotated. Values are always encrypted with `DB_ENCRYPTION_KEY`.
 -   `DB_ENCRYPTION_ALGORITHM`: The algorithm used for the encryption.
 -   `DB_ENCRYPTION_IV_LENGTH`: The length of the initialization vector used by the encryption.
 
