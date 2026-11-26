@@ -48,7 +48,7 @@ For more information, visit https://typeorm.io/#/migrations
 
 ### Rotating `DB_ENCRYPTION_KEY`
 
-`DB_ENCRYPTION_KEY` encrypts the `user` table's `authToken`, `refreshToken`, `emailAddress` and `name` columns (`aes-256-cbc`, through `@doist/ui-extensions-server`). Since the November 2026 rotation, production loads it from the `DB_ENCRYPTION_KEY2` field of the `integrations/todoist-google-sheets/secrets-4oa5bD` secret.
+`DB_ENCRYPTION_KEY` encrypts the `user` table's `authToken`, `refreshToken`, `emailAddress` and `name` columns (`aes-256-cbc`, through `@doist/ui-extensions-server`). Since the November 2026 rotation, production loads it from the `DB_ENCRYPTION_KEY2` field of the `integrations/todoist-google-sheets/secrets` secret.
 
 To rotate it again, follow the November 2026 rotation: four deploys, each merged only after the previous one has deployed.
 
