@@ -59,17 +59,6 @@ To rotate it again, follow the November 2026 rotation: four deploys, each merged
 
 Every version can read what the versions before and after it write, so tasks still running the old version during a deploy, and an automatic rollback, never lose access to a row.
 
-Things to know:
-
--   Add the new key as a new field in the secret (for example `DB_ENCRYPTION_KEY3`) rather than overwriting the current one, so the old key stays available until step 4.
--   `aes-256-cbc` has no integrity check: about 1 in 256 decryptions with the wrong key "succeed" with random bytes. Only accept a result that's valid UTF-8 with no control characters.
--   TypeORM keeps a parent entity's column over a subclass's redeclaration of it, so changing the library's `User` columns takes a copy of the entity, not a subclass.
--   The re-encryption runs while the old version is still serving requests, so a user's tokens can be refreshed between reading a row and writing it back. Each `UPDATE` only writes a row whose columns still hold the values that were read (`<=>`); rows that changed are left for step 3.
--   Step 2's migration fails the deploy if there are rows but none of them were re-encrypted, which usually means the fallback key is wrong. The deploy then rolls back instead of continuing on keys that don't match the data.
--   The rotation PRs log a warning when a value is decrypted with the fallback key (`reason: fallback-key`) and an error when no key works. Those logs only go to CloudWatch, not Sentry. Before merging step 4, ask someone with CloudWatch access (Platform) to search the service's log group from step 3's deploy onwards for `DB_ENCRYPTION_FALLBACK_KEY` and `Could not decrypt a database value`. It should find nothing.
--   `aws/cloudformation.yml` gives the container 5 minutes after it starts (`StartPeriod`, `HealthCheckGracePeriodSeconds`) before failed health checks count, because migrations run before the server starts listening.
--   Those PRs' Test Plans run the whole rotation locally against a throwaway MySQL, with dummy keys.
-
 ### Google App developer account setup
 
 1. Create a new Google app (click the dropdown next to the page title, then choose New Project) [link](https://console.cloud.google.com/apis/dashboard)
