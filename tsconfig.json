@@ -1,6 +1,15 @@
 {
-    "extends": "@doist/tsconfig",
     "compilerOptions": {
+        // These were @doist/tsconfig 1.x's options, minus importsNotUsedAsValues, which TypeScript
+        // 5.5 removed. @doist/tsconfig 2.x replaces it with verbatimModuleSyntax, which doesn't
+        // support the CommonJS output NestJS needs; the consistent-type-imports lint rule still
+        // enforces `import type`.
+        "strict": true,
+        "useUnknownInCatchVariables": true,
+        "noImplicitReturns": true,
+        "forceConsistentCasingInFileNames": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
         "outDir": "./dist",
         "baseUrl": "./src",
         "target": "es2017",
