@@ -24,7 +24,6 @@ To tailor your dev environment, create a `.env` file and put in the relevant set
 -   `DB_USERNAME`: Database username
 -   `DB_PASSWORD`: Database password
 -   `DB_ENCRYPTION_KEY`: The db is encrypting sensitive columns, provide the key here.
--   `DB_ENCRYPTION_FALLBACK_KEY` (optional): A second key used only to decrypt, while `DB_ENCRYPTION_KEY` is being rotated. Values are always encrypted with `DB_ENCRYPTION_KEY`.
 -   `DB_ENCRYPTION_ALGORITHM`: The algorithm used for the encryption.
 -   `DB_ENCRYPTION_IV_LENGTH`: The length of the initialization vector used by the encryption.
 
@@ -46,6 +45,19 @@ This will create an empty migration in the `migrations` folder. You can go ahead
 There's also the option to let typeorm generate the migration for you automatically. In this case,
 you need to run `npm run migration:generate ./src/migrations/<name>` (name should be the migration name you want to give it, don't include spaces).
 For more information, visit https://typeorm.io/#/migrations
+
+### Rotating `DB_ENCRYPTION_KEY`
+
+`DB_ENCRYPTION_KEY` encrypts the `user` table's `authToken`, `refreshToken`, `emailAddress` and `name` columns (`aes-256-cbc`, through `@doist/ui-extensions-server`). Since the November 2026 rotation, production loads it from the `DB_ENCRYPTION_KEY2` field of the `integrations/todoist-google-sheets/secrets` secret.
+
+To rotate it again, follow the November 2026 rotation: four deploys, each merged only after the previous one has deployed.
+
+1. [#291](https://github.com/todoist/todoist-google-sheets/pull/291): read with either key. A transformer decrypts with `DB_ENCRYPTION_KEY` or `DB_ENCRYPTION_FALLBACK_KEY` and still encrypts with the old key; the new key is loaded as the fallback.
+2. [#290](https://github.com/todoist/todoist-google-sheets/pull/290): swap the keys and re-encrypt every row in a startup migration.
+3. [#292](https://github.com/todoist/todoist-google-sheets/pull/292): re-encrypt rows that old tasks wrote with the old key during step 2's rollout.
+4. [#294](https://github.com/todoist/todoist-google-sheets/pull/294): remove the fallback key and the rotation code. Only after this deploys, delete the old key's field from the secret.
+
+Every version can read what the versions before and after it write, so tasks still running the old version during a deploy, and an automatic rollback, never lose access to a row.
 
 ### Google App developer account setup
 
