@@ -7,7 +7,9 @@ import { DataSource } from 'typeorm'
 import { AppModule } from '../../src/modules/app.module'
 import { mockConnection } from '../mocks'
 
+import type { INestApplication } from '@nestjs/common'
 import type { NestExpressApplication } from '@nestjs/platform-express'
+import type { App } from 'supertest/types'
 
 export async function createTestApp(): Promise<{
     appModule: NestExpressApplication
@@ -28,4 +30,11 @@ export async function createTestApp(): Promise<{
     await registerViews(app)
 
     return { appModule: await app.init() }
+}
+
+/**
+ * The app's HTTP server, typed for supertest (Nest returns it as `any`).
+ */
+export function httpServer(app: INestApplication): App {
+    return app.getHttpServer() as App
 }

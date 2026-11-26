@@ -4,7 +4,7 @@ import request from 'supertest'
 
 import { UserDatabaseService } from '../../src/services/user-database.service'
 
-import { createTestApp } from './helpers'
+import { createTestApp, httpServer } from './helpers'
 
 import type { DoistCardResponse } from '@doist/ui-extensions-core'
 import type { INestApplication } from '@nestjs/common'
@@ -27,7 +27,7 @@ describe('Settings e2e tests', () => {
                 emailAddress: 'ian@ingen.com',
             } as User),
         )
-        return request(app.getHttpServer())
+        return request(httpServer(app))
             .post('/settings')
             .send({
                 context: { user: { id: 42 }, theme: 'light' },
@@ -59,7 +59,7 @@ describe('Settings e2e tests', () => {
             } as User),
         )
 
-        return request(app.getHttpServer())
+        return request(httpServer(app))
             .post('/process')
             .send({
                 context: { user: { id: 42 }, theme: 'light' },

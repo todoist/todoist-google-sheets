@@ -1,6 +1,6 @@
 import request from 'supertest'
 
-import { createTestApp } from './helpers'
+import { createTestApp, httpServer } from './helpers'
 
 import type { INestApplication } from '@nestjs/common'
 
@@ -15,13 +15,13 @@ describe('Auth e2e tests', () => {
     })
 
     it('/GET /success', () =>
-        request(app.getHttpServer())
+        request(httpServer(app))
             .get('/success')
             .expect(200)
             .expect('Content-Type', /text\/html/))
 
     it('/GET /error', () =>
-        request(app.getHttpServer())
+        request(httpServer(app))
             .get('/error')
             .expect(200)
             .expect('Content-Type', /text\/html/))

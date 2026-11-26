@@ -9,11 +9,11 @@ import type { ExportOptionsToUse } from '../src/types'
 export const buildUser = build<User>('User', {
     fields: {
         id: sequence((num) => num + 10000000),
-        twistId: perBuild(() => faker.datatype.number(20)),
+        twistId: perBuild(() => faker.number.int(20)),
         authToken: perBuild(() => faker.internet.password()),
         refreshToken: perBuild(() => faker.internet.password()),
-        externalUserId: perBuild(() => faker.datatype.uuid()),
-        name: perBuild(() => faker.name.fullName()),
+        externalUserId: perBuild(() => faker.string.uuid()),
+        name: perBuild(() => faker.person.fullName()),
         emailAddress: perBuild(() => faker.internet.email()),
         set: User.prototype.set,
         update: User.prototype.update,
@@ -86,7 +86,7 @@ export const buildSection = build<Section>('Section', {
 export const buildCollaborator = build<Collaborator>('Collaborator', {
     fields: {
         id: sequence((num) => String(num + 10000000)),
-        name: perBuild(() => faker.name.fullName()),
+        name: perBuild(() => faker.person.fullName()),
         email: perBuild(() => faker.internet.email()),
     },
 })
