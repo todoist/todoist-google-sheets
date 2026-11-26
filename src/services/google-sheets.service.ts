@@ -181,6 +181,6 @@ export class GoogleSheetsService extends AuthenticationClient {
     }
 
     private getExpirationDate(tokenData: Auth.Credentials): Date {
-        return dayjs(tokenData.expiry_date as number).toDate()
+        return dayjs(tokenData.expiry_date).toDate()
     }
 }

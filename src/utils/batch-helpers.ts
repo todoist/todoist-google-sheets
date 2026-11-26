@@ -13,17 +13,17 @@ export async function batchExecute<T, R>(
     concurrencyLimit = 10,
 ): Promise<R[]> {
     const results: R[] = []
-    const executing: Promise<void>[] = []
+    const executing = new Set<Promise<void>>()
 
     for (const item of items) {
         const promise = fn(item).then((result) => {
             results.push(result)
-            executing.splice(executing.indexOf(promise), 1)
+            executing.delete(promise)
         })
 
-        executing.push(promise)
+        executing.add(promise)
 
-        if (executing.length >= concurrencyLimit) {
+        if (executing.size >= concurrencyLimit) {
             await Promise.race(executing)
         }
     }

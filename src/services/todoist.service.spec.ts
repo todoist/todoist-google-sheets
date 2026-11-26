@@ -412,7 +412,7 @@ describe('TodoistService', () => {
     function buildCompletedTasks(prefix: string, count: number, completedAt: string): SyncTask[] {
         return Array.from(
             { length: count },
-            (_, index) => ({ id: `${prefix}-${index}`, completed_at: completedAt } as SyncTask),
+            (_, index) => ({ id: `${prefix}-${index}`, completed_at: completedAt }) as SyncTask,
         )
     }
 

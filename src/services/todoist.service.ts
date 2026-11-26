@@ -238,7 +238,7 @@ export class TodoistService {
         let consecutiveEmptyWindows = 0
         let batchSize = 1
 
-        for (let start = 0; start < windows.length; ) {
+        for (let start = 0; start < windows.length;) {
             const batch = windows.slice(start, start + batchSize)
             start += batch.length
 
