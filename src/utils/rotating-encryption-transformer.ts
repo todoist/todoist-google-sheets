@@ -2,10 +2,13 @@ import { TextDecoder } from 'util'
 
 import { validateEnv } from '@doist/ui-extensions-server'
 
+import { Logger } from '@nestjs/common'
 import { decryptData, EncryptionTransformer } from 'typeorm-encrypted'
 
 import type { FindOperator, ValueTransformer } from 'typeorm'
 import type { EncryptionOptions } from 'typeorm-encrypted'
+
+const logger = new Logger('RotatingEncryptionTransformer')
 
 export type DecryptedValue = {
     plaintext: string
@@ -23,6 +26,10 @@ export type DecryptedValue = {
  * is only accepted if it's valid UTF-8 text with no control characters, which all the encrypted
  * columns (tokens, email address, name) are. Random bytes pass that check about once in ten
  * million wrong-key attempts. A value that no key turns into clean text is an error.
+ *
+ * Reads through `from` log the two outcomes that matter during a rotation: a value read with the
+ * fallback key (a row still waiting to be re-encrypted), and a value no key can read (the user's
+ * request fails). The logs carry neither values nor row ids.
  */
 export class RotatingEncryptionTransformer implements ValueTransformer {
     private readonly writer: EncryptionTransformer
@@ -39,11 +46,29 @@ export class RotatingEncryptionTransformer implements ValueTransformer {
         if (!value) {
             return undefined
         }
-        return this.decrypt(value).plaintext
+
+        let decrypted: DecryptedValue
+        try {
+            decrypted = this.decrypt(value)
+        } catch (error: unknown) {
+            logger.error('Could not decrypt a database value with any configured key', {
+                reason: 'no-key',
+                keyCount: this.keys.length,
+            })
+            throw error
+        }
+
+        if (!decrypted.isCurrentKey) {
+            logger.warn('Decrypted a database value with DB_ENCRYPTION_FALLBACK_KEY', {
+                reason: 'fallback-key',
+            })
+        }
+        return decrypted.plaintext
     }
 
     /**
-     * Decrypts a stored, non-empty value with whichever key it was encrypted with.
+     * Decrypts a stored, non-empty value with whichever key it was encrypted with. Doesn't log:
+     * callers that decrypt many values at once, like the re-encryption migration, log a summary.
      */
     decrypt(value: string): DecryptedValue {
         const data = Buffer.from(value, 'base64')
@@ -98,13 +123,16 @@ export function getUserEncryptionTransformer(): RotatingEncryptionTransformer | 
     return new RotatingEncryptionTransformer(getEncryptionKeys())
 }
 
+// Without `stream: true`, each `decode` call is independent, so one instance can be shared.
+const UTF8_DECODER = new TextDecoder('utf-8', { fatal: true })
+
 // eslint-disable-next-line no-control-regex -- matching control characters is the point
 const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/
 
 function decodeText(bytes: Buffer): string | undefined {
     let text: string
     try {
-        text = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+        text = UTF8_DECODER.decode(bytes)
     } catch {
         return undefined
     }

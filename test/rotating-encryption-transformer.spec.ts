@@ -1,8 +1,10 @@
 import { User as UserBase } from '@doist/ui-extensions-server'
 
+import { Logger } from '@nestjs/common'
 import { DataSource } from 'typeorm'
 import { EncryptionTransformer } from 'typeorm-encrypted'
 
+import { User as UserEntity } from '../src/entities/user.entity'
 import {
     getEncryptionKeys,
     RotatingEncryptionTransformer,
@@ -24,7 +26,15 @@ describe('RotatingEncryptionTransformer', () => {
         const stored = new RotatingEncryptionTransformer([NEW, OLD]).to('secret') as string
 
         expect(new EncryptionTransformer(NEW).from(stored)).toEqual('secret')
-        expect(() => new EncryptionTransformer(OLD).from(stored)).toThrow()
+        // The old key usually throws here, but about 1 in 256 times it returns noise instead, so
+        // only assert that it doesn't recover the value.
+        let withOldKey: string | undefined
+        try {
+            withOldKey = new EncryptionTransformer(OLD).from(stored)
+        } catch {
+            withOldKey = undefined
+        }
+        expect(withOldKey).not.toEqual('secret')
     })
 
     it('decrypts values encrypted with either key', () => {
@@ -62,6 +72,45 @@ describe('RotatingEncryptionTransformer', () => {
         const stored = new EncryptionTransformer(OLD).to('Zoë 🦊 José') as string
 
         expect(transformer.from(stored)).toEqual('Zoë 🦊 José')
+    })
+
+    it('logs reads that needed the fallback key, without the value', () => {
+        const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined)
+        const transformer = new RotatingEncryptionTransformer([NEW, OLD])
+
+        transformer.from(new EncryptionTransformer(NEW).to('current') as string)
+        expect(warn).not.toHaveBeenCalled()
+
+        transformer.from(new EncryptionTransformer(OLD).to('do-not-log') as string)
+        expect(warn).toHaveBeenCalledTimes(1)
+        expect(warn).toHaveBeenCalledWith(
+            'Decrypted a database value with DB_ENCRYPTION_FALLBACK_KEY',
+            { reason: 'fallback-key' },
+        )
+    })
+
+    it('logs and rethrows when no key can read a value', () => {
+        const error = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined)
+        const otherKey = { ...OPTIONS, key: 'a'.repeat(64) }
+        const stored = new EncryptionTransformer(otherKey).to('do-not-log') as string
+
+        expect(() => new RotatingEncryptionTransformer([NEW, OLD]).from(stored)).toThrow(
+            'Could not decrypt value with any configured key',
+        )
+        expect(error).toHaveBeenCalledWith(
+            'Could not decrypt a database value with any configured key',
+            { reason: 'no-key', keyCount: 2 },
+        )
+    })
+
+    it('does not log when decrypting directly (the migration logs a summary)', () => {
+        const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined)
+
+        new RotatingEncryptionTransformer([NEW, OLD]).decrypt(
+            new EncryptionTransformer(OLD).to('x') as string,
+        )
+
+        expect(warn).not.toHaveBeenCalled()
     })
 
     it('returns nothing for empty values, like typeorm-encrypted', () => {
@@ -214,6 +263,8 @@ describe('User entity', () => {
                         isNullable: c.isNullable,
                         isPrimary: c.isPrimary,
                         isGenerated: c.isGenerated,
+                        default: c.default as unknown,
+                        unsigned: c.unsigned,
                     }))
                     .sort((a, b) => a.name.localeCompare(b.name)),
             }
@@ -222,5 +273,25 @@ describe('User entity', () => {
         expect(schemaOf(await buildMetadata(() => User))).toEqual(
             schemaOf(await buildMetadata(() => UserBase)),
         )
+    })
+
+    it('copies every field in set, like the library entity', () => {
+        const data = {
+            twistId: 42,
+            authToken: 'access',
+            refreshToken: 'refresh',
+            tokenExpiresAt: new Date('2026-11-26T00:00:00Z'),
+            externalUserId: 'google-123',
+            emailAddress: 'one@example.com',
+            name: 'One',
+        }
+        const ours = new UserEntity()
+        const library = new UserBase()
+
+        ours.set(data)
+        library.set(data)
+
+        expect({ ...ours }).toEqual(data)
+        expect({ ...ours }).toEqual({ ...library })
     })
 })
