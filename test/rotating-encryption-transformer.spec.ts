@@ -2,7 +2,7 @@ import { User as UserBase } from '@doist/ui-extensions-server'
 
 import { Logger } from '@nestjs/common'
 import { DataSource } from 'typeorm'
-import { EncryptionTransformer } from 'typeorm-encrypted'
+import { encryptData, EncryptionTransformer } from 'typeorm-encrypted'
 
 import { User as UserEntity } from '../src/entities/user.entity'
 import {
@@ -72,6 +72,53 @@ describe('RotatingEncryptionTransformer', () => {
         const stored = new EncryptionTransformer(OLD).to('Zoë 🦊 José') as string
 
         expect(transformer.from(stored)).toEqual('Zoë 🦊 José')
+    })
+
+    it('rejects a decryption that gives invalid UTF-8', () => {
+        // Encrypted with the right key, so the padding check passes every time: only the text
+        // check can reject it.
+        const stored = encryptData(Buffer.from([0x61, 0xff, 0xfe, 0x62]), NEW).toString('base64')
+
+        expect(() => new RotatingEncryptionTransformer([NEW]).decrypt(stored)).toThrow(
+            'Could not decrypt value with any configured key',
+        )
+    })
+
+    it('rejects a decryption that gives control characters, but accepts tabs and newlines', () => {
+        const transformer = new RotatingEncryptionTransformer([NEW])
+        function stored(text: string) {
+            return encryptData(Buffer.from(text, 'utf8'), NEW).toString('base64')
+        }
+
+        expect(() => transformer.decrypt(stored('ab\u0001cd'))).toThrow(
+            'Could not decrypt value with any configured key',
+        )
+        expect(() => transformer.decrypt(stored('ab\u007fcd'))).toThrow(
+            'Could not decrypt value with any configured key',
+        )
+        expect(transformer.decrypt(stored('a\tb\nc')).plaintext).toEqual('a\tb\nc')
+    })
+
+    it('rejects keys that cannot work with the algorithm, without including them', () => {
+        const short = { ...OPTIONS, key: 'ab'.repeat(16) }
+        const notHex = { ...OPTIONS, key: 'zz'.repeat(32) }
+
+        expect(() => new RotatingEncryptionTransformer([short])).toThrow(
+            'The current encryption key must be 64 hex characters for aes-256-cbc',
+        )
+        expect(() => new RotatingEncryptionTransformer([NEW, notHex])).toThrow(
+            'The fallback encryption key must be 64 hex characters for aes-256-cbc',
+        )
+        expect(() => new RotatingEncryptionTransformer([{ ...NEW, ivLength: 12 }])).toThrow(
+            'The IV length for aes-256-cbc must be 16',
+        )
+        let error: Error | undefined
+        try {
+            new RotatingEncryptionTransformer([short])
+        } catch (e: unknown) {
+            error = e as Error
+        }
+        expect(error?.message).not.toContain(short.key)
     })
 
     it('logs reads that needed the fallback key, without the value', () => {

@@ -1,3 +1,4 @@
+import { getCipherInfo } from 'crypto'
 import { TextDecoder } from 'util'
 
 import { validateEnv } from '@doist/ui-extensions-server'
@@ -9,6 +10,8 @@ import type { FindOperator, ValueTransformer } from 'typeorm'
 import type { EncryptionOptions } from 'typeorm-encrypted'
 
 const logger = new Logger('RotatingEncryptionTransformer')
+
+const HEX = /^[0-9a-f]+$/i
 
 export type DecryptedValue = {
     plaintext: string
@@ -35,6 +38,7 @@ export class RotatingEncryptionTransformer implements ValueTransformer {
     private readonly writer: EncryptionTransformer
 
     constructor(private readonly keys: readonly [EncryptionOptions, ...EncryptionOptions[]]) {
+        keys.forEach((key, index) => validateKey(key, index === 0 ? 'current' : 'fallback'))
         this.writer = new EncryptionTransformer(keys[0])
     }
 
@@ -137,4 +141,26 @@ function decodeText(bytes: Buffer): string | undefined {
         return undefined
     }
     return CONTROL_CHARACTERS.test(text) ? undefined : text
+}
+
+/**
+ * Fails if a key can't work with its algorithm. Without this, a mistyped key (wrong length, or
+ * not hex, which `Buffer.from(key, 'hex')` silently truncates) only shows up when a value fails to
+ * decrypt, indistinguishable from a value encrypted with another key. The message never includes
+ * the key.
+ */
+function validateKey({ key, algorithm, ivLength }: EncryptionOptions, which: string): void {
+    const cipher = getCipherInfo(algorithm)
+    if (!cipher) {
+        throw new Error(`Unknown encryption algorithm ${algorithm}`)
+    }
+    const expectedLength = cipher.keyLength * 2
+    if (key.length !== expectedLength || !HEX.test(key)) {
+        throw new Error(
+            `The ${which} encryption key must be ${expectedLength} hex characters for ${algorithm}`,
+        )
+    }
+    if (cipher.ivLength !== undefined && ivLength !== cipher.ivLength) {
+        throw new Error(`The IV length for ${algorithm} must be ${cipher.ivLength}`)
+    }
 }
