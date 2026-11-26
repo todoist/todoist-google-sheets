@@ -16,16 +16,16 @@ This should yield a backend running at `http://localhost:3000`
 
 To tailor your dev environment, create a `.env` file and put in the relevant settings:
 
--   `PORT`: The port the backend will run on
--   `BASE_URL`: This is the domain for accessing static files (like images)
--   `VERIFICATION_TOKENS`: This is the comma-separated list of valid tokens the integration will require to validate when it's called.
--   `DB_HOST`: Database host
--   `DB_PORT`: Database port
--   `DB_USERNAME`: Database username
--   `DB_PASSWORD`: Database password
--   `DB_ENCRYPTION_KEY`: The db is encrypting sensitive columns, provide the key here.
--   `DB_ENCRYPTION_ALGORITHM`: The algorithm used for the encryption.
--   `DB_ENCRYPTION_IV_LENGTH`: The length of the initialization vector used by the encryption.
+- `PORT`: The port the backend will run on
+- `BASE_URL`: This is the domain for accessing static files (like images)
+- `VERIFICATION_TOKENS`: This is the comma-separated list of valid tokens the integration will require to validate when it's called.
+- `DB_HOST`: Database host
+- `DB_PORT`: Database port
+- `DB_USERNAME`: Database username
+- `DB_PASSWORD`: Database password
+- `DB_ENCRYPTION_KEY`: The db is encrypting sensitive columns, provide the key here.
+- `DB_ENCRYPTION_ALGORITHM`: The algorithm used for the encryption.
+- `DB_ENCRYPTION_IV_LENGTH`: The length of the initialization vector used by the encryption.
 
 ### Database
 
@@ -72,16 +72,16 @@ You will need to use something like [ngrok](https://ngrok.com/), or [localtunnel
 
 ### Creating the Integration
 
--   Go to https://todoist.com/app_console
--   Create a new integration
--   Scroll down to the UI Extensions section of that integration and add a new one. This should be of type Context menu. The URL should be a locally running [ngrok](https://ngrok.com/) or [localtunnel](https://www.npmjs.com/package/localtunnel) instance (`https://<your ngrok/localtunnel url>/process`).
--   Select the `data:read` scope and save.
+- Go to https://todoist.com/app_console
+- Create a new integration
+- Scroll down to the UI Extensions section of that integration and add a new one. This should be of type Context menu. The URL should be a locally running [ngrok](https://ngrok.com/) or [localtunnel](https://www.npmjs.com/package/localtunnel) instance (`https://<your ngrok/localtunnel url>/process`).
+- Select the `data:read` scope and save.
 
 ### Displaying the UI Extension
 
 To display the UI extension:
 
--   Copy the verification token from the integration created previously and put it in your `.env` file in the `VERIFICATION_TOKENS` field.
--   Start the extension service (`npm run start:dev`) and start ngrok/localtunnel.
--   Go to https://todoist.com
--   Click a context menu of a project, then extensions, then whatever you called your UI extension
+- Copy the verification token from the integration created previously and put it in your `.env` file in the `VERIFICATION_TOKENS` field.
+- Start the extension service (`npm run start:dev`) and start ngrok/localtunnel.
+- Go to https://todoist.com
+- Click a context menu of a project, then extensions, then whatever you called your UI extension

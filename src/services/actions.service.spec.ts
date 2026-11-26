@@ -25,7 +25,7 @@ import { GoogleSheetsService } from './google-sheets.service'
 import { TodoistService } from './todoist.service'
 import { UserDatabaseService } from './user-database.service'
 
-import type { ContextMenuData, DoistCardContextUser } from '@doist/ui-extensions-core'
+import type { DoistCardContextUser } from '@doist/ui-extensions-core'
 
 describe('ActionsService', () => {
     let target: ActionsService
@@ -81,7 +81,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                 },
                 extensionType: 'context-menu',
                 maximumDoistCardVersion: 0.5,
@@ -105,7 +105,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                 },
                 extensionType: 'context-menu',
                 maximumDoistCardVersion: 0.5,
@@ -140,7 +140,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         'Input.completed': 'true',
                     },
@@ -176,7 +176,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         'Input.section': 'false',
                     },
@@ -213,7 +213,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         'Input.section': 'true',
                     },
@@ -248,7 +248,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         [Inputs.IncludeCompleted]: 'false',
                     },
@@ -294,7 +294,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         [Inputs.IncludeCompleted]: 'true',
                     },
@@ -376,7 +376,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         [Inputs.IncludeCompleted]: 'true',
                     },
@@ -466,7 +466,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         [Inputs.IncludeCompleted]: 'true',
                         'Input.section': 'false',
@@ -553,7 +553,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         [Inputs.IncludeCompleted]: 'true',
                         'Input.section': 'true',
@@ -648,7 +648,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         [Inputs.IncludeCompleted]: 'true',
                     },
@@ -691,7 +691,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         'Input.section': 'false',
                     },
@@ -729,7 +729,7 @@ describe('ActionsService', () => {
                         url: 'https://google.com',
                         content: 'My Project',
                         contentPlain: 'My Project',
-                    } as ContextMenuData,
+                    },
                     inputs: {
                         'Input.section': 'false',
                     },
