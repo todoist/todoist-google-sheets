@@ -24,26 +24,6 @@
         "notes": "axios Requests Vulnerable To Possible SSRF and Credential Leakage via Absolute URL",
         "expiry": "2026/06/30"
     },
-    "1110996": {
-        "active": true,
-        "notes": "Node-forge has ASN.1 Unbounded Recursion",
-        "expiry": "2027/01/31"
-    },
-    "1110998": {
-        "active": true,
-        "notes": "Node-forge is vulnerable to ASN.1 OID Integer Truncation",
-        "expiry": "2027/01/31"
-    },
-    "1111068": {
-        "active": true,
-        "notes": "node-forge ASN.1 OID Integer Truncation - requires dependency updates",
-        "expiry": "2027/01/31"
-    },
-    "1111243": {
-        "active": true,
-        "notes": "jws HMAC Signature verification issue - requires dependency updates",
-        "expiry": "2027/01/31"
-    },
     "1112195": {
         "active": true,
         "notes": "Axios is vulnerable to DoS attack through lack of data size check - requires dependency updates further up the tree (like the @doist packages)",
@@ -209,26 +189,6 @@
         "notes": "Axios: Nested axios option objects can consume polluted prototype values - axios 0.21 via @doist/integrations-common",
         "expiry": "2027/01/31"
     },
-    "1240101": {
-        "active": true,
-        "notes": "brace-expansion: Quadratic-time expansion of the `{a},b}` rewrite causes CPU denial of service - via typeorm",
-        "expiry": "2027/01/31"
-    },
-    "1240105": {
-        "active": true,
-        "notes": "brace-expansion: DoS via uncontrolled recursion on nested brace groups causing stack exhaustion - via typeorm",
-        "expiry": "2027/01/31"
-    },
-    "1240109": {
-        "active": true,
-        "notes": "brace-expansion: DoS via uncontrolled recursion in parseCommaParts causing stack exhaustion - via typeorm",
-        "expiry": "2027/01/31"
-    },
-    "1164782": {
-        "active": true,
-        "notes": "fflate unzipSync can enter an infinite loop when parsing malformed ZIP64 archives - via @nestjs/common > file-type",
-        "expiry": "2027/01/31"
-    },
     "1114301": {
         "active": true,
         "notes": "file-type affected by infinite loop in ASF parser on malformed input with zero-size sub-header - via @nestjs/common",
@@ -294,16 +254,6 @@
         "notes": "lodash vulnerable to Code Injection via `_.template` imports key names - direct dependency and via @nestjs/config",
         "expiry": "2027/01/31"
     },
-    "1115810": {
-        "active": true,
-        "notes": "lodash vulnerable to Prototype Pollution via array path bypass in `_.unset` and `_.omit` - direct dependency and via @nestjs/config",
-        "expiry": "2027/01/31"
-    },
-    "1120370": {
-        "active": true,
-        "notes": "Lodash has Prototype Pollution Vulnerability in `_.unset` and `_.omit` functions - direct dependency and via @nestjs/config",
-        "expiry": "2027/01/31"
-    },
     "1113996": {
         "active": true,
         "notes": "Multer Vulnerable to Denial of Service via Uncontrolled Recursion - via @nestjs/platform-express",
@@ -329,39 +279,9 @@
         "notes": "multer vulnerable to Denial of Service via oversized array index in field names - via @nestjs/platform-express",
         "expiry": "2027/01/31"
     },
-    "1115545": {
-        "active": true,
-        "notes": "Forge has a basicConstraints bypass in its certificate chain verification (RFC 5280 violation) - via googleapis",
-        "expiry": "2027/01/31"
-    },
-    "1115546": {
-        "active": true,
-        "notes": "Forge has signature forgery in Ed25519 due to missing S > L check - via googleapis",
-        "expiry": "2027/01/31"
-    },
-    "1115548": {
-        "active": true,
-        "notes": "Forge has Denial of Service via Infinite Loop in BigInteger.modInverse() with Zero Input - via googleapis",
-        "expiry": "2027/01/31"
-    },
-    "1115612": {
-        "active": true,
-        "notes": "Forge has signature forgery in RSA-PKCS due to ASN.1 extra field - via googleapis",
-        "expiry": "2027/01/31"
-    },
-    "1240912": {
-        "active": true,
-        "notes": "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements - via googleapis",
-        "expiry": "2027/01/31"
-    },
     "1115527": {
         "active": true,
         "notes": "path-to-regexp vulnerable to Regular Expression Denial of Service via multiple route parameters - via express",
-        "expiry": "2027/01/31"
-    },
-    "1241210": {
-        "active": true,
-        "notes": "proxy-addr vulnerable to IP spoofing via IPv4-mapped IPv6 trust subnet - via express",
         "expiry": "2027/01/31"
     },
     "1113719": {
@@ -383,5 +303,50 @@
         "active": true,
         "notes": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided - via @doist/todoist-api-typescript and @nestjs/typeorm",
         "expiry": "2027/01/31"
+    },
+    "1243073": {
+        "active": true,
+        "notes": "body-parser DoS via trailing bytes after a compressed body - via @nestjs/platform-express; fixed by the NestJS 11 upgrade",
+        "expiry": "2027/02/28"
+    },
+    "1243074": {
+        "active": true,
+        "notes": "body-parser DoS via trailing bytes after a compressed body - via @nestjs/platform-express; fixed by the NestJS 11 upgrade",
+        "expiry": "2027/02/28"
+    },
+    "1243083": {
+        "active": true,
+        "notes": "multer DoS via a pending asynchronous fileFilter - via @nestjs/platform-express; fixed by the NestJS 11 upgrade",
+        "expiry": "2027/02/28"
+    },
+    "1243687": {
+        "active": true,
+        "notes": "qs.stringify with arrayFormat comma throws on arrays - via @nestjs/platform-express and express; fixed by the NestJS 11 upgrade",
+        "expiry": "2027/02/28"
+    },
+    "1244531": {
+        "active": true,
+        "notes": "lodash prototype pollution in _.unset/_.omit/_.pull - via @nestjs/config; fixed by the @nestjs/config major upgrade",
+        "expiry": "2027/02/28"
+    },
+    "1244013": {
+        "active": true,
+        "notes": "glob AbortSignal cancellation bypass - from typeorm dependency; fixed by the TypeORM 1.x upgrade",
+        "expiry": "2027/02/28"
+    },
+    "1244623": {
+        "active": true,
+        "notes": "minimatch DoS via globparts amplification - from typeorm dependency; fixed by the TypeORM 1.x upgrade",
+        "expiry": "2027/02/28"
+    },
+    "1243066": {
+        "active": true,
+        "notes": "zod memory exhaustion on oversized constrained collections - via @doist/todoist-api-typescript; fixed by moving to @doist/todoist-sdk (#278)",
+        "expiry": "2027/02/28"
+    },
+    "1243453": {
+        "active": true,
+        "notes": "hbs sensitive information exposure - via @doist/ui-extensions-server > hbs; no fixed hbs version yet (affects <=4.4.0, the latest)",
+        "expiry": "2027/02/28"
     }
 }
