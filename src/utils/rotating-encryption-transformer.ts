@@ -1,0 +1,112 @@
+import { TextDecoder } from 'util'
+
+import { validateEnv } from '@doist/ui-extensions-server'
+
+import { decryptData, EncryptionTransformer } from 'typeorm-encrypted'
+
+import type { FindOperator, ValueTransformer } from 'typeorm'
+import type { EncryptionOptions } from 'typeorm-encrypted'
+
+export type DecryptedValue = {
+    plaintext: string
+    /** Whether the value is already encrypted with the current key, `DB_ENCRYPTION_KEY`. */
+    isCurrentKey: boolean
+}
+
+/**
+ * Encrypts with the current key and decrypts with either the current key or a fallback key, so
+ * the app can read rows written before and after a key rotation. Values are stored the same way
+ * as by `typeorm-encrypted`'s `EncryptionTransformer` (base64 of IV + ciphertext).
+ *
+ * With `aes-256-cbc` there's no integrity check: decrypting with the wrong key fails on the
+ * padding most of the time, but about 1 in 256 times it "succeeds" with random bytes. So a result
+ * is only accepted if it's valid UTF-8 text with no control characters, which all the encrypted
+ * columns (tokens, email address, name) are. Random bytes pass that check about once in ten
+ * million wrong-key attempts. A value that no key turns into clean text is an error.
+ */
+export class RotatingEncryptionTransformer implements ValueTransformer {
+    private readonly writer: EncryptionTransformer
+
+    constructor(private readonly keys: readonly [EncryptionOptions, ...EncryptionOptions[]]) {
+        this.writer = new EncryptionTransformer(keys[0])
+    }
+
+    to(value?: string | FindOperator<unknown> | null): string | FindOperator<unknown> | undefined {
+        return this.writer.to(value)
+    }
+
+    from(value?: string | null): string | undefined {
+        if (!value) {
+            return undefined
+        }
+        return this.decrypt(value).plaintext
+    }
+
+    /**
+     * Decrypts a stored, non-empty value with whichever key it was encrypted with.
+     */
+    decrypt(value: string): DecryptedValue {
+        const data = Buffer.from(value, 'base64')
+        let lastError: unknown
+
+        for (const [index, key] of this.keys.entries()) {
+            let bytes: Buffer
+            try {
+                bytes = decryptData(data, key)
+            } catch (error: unknown) {
+                lastError = error
+                continue
+            }
+
+            const text = decodeText(bytes)
+            if (text !== undefined) {
+                return { plaintext: text, isCurrentKey: index === 0 }
+            }
+        }
+
+        // The cause is a crypto error, which never includes the value.
+        throw new Error('Could not decrypt value with any configured key', { cause: lastError })
+    }
+}
+
+/**
+ * Reads the encryption settings from env: `DB_ENCRYPTION_KEY` is used to encrypt and decrypt,
+ * and `DB_ENCRYPTION_FALLBACK_KEY`, when set, only to decrypt.
+ */
+export function getEncryptionKeys(): [EncryptionOptions, ...EncryptionOptions[]] {
+    const algorithm = validateEnv(process.env.DB_ENCRYPTION_ALGORITHM, 'DB_ENCRYPTION_ALGORITHM')
+    const ivLength = Number(
+        validateEnv(process.env.DB_ENCRYPTION_IV_LENGTH, 'DB_ENCRYPTION_IV_LENGTH'),
+    )
+    const currentKey = validateEnv(process.env.DB_ENCRYPTION_KEY, 'DB_ENCRYPTION_KEY')
+    const fallbackKey = process.env.DB_ENCRYPTION_FALLBACK_KEY
+
+    const current = { key: currentKey, algorithm, ivLength }
+    return fallbackKey && fallbackKey !== currentKey
+        ? [current, { key: fallbackKey, algorithm, ivLength }]
+        : [current]
+}
+
+/**
+ * The transformer for the encrypted `User` columns. Like `@doist/ui-extensions-server`, it returns
+ * none when there's no database configured (unit tests).
+ */
+export function getUserEncryptionTransformer(): RotatingEncryptionTransformer | undefined {
+    if (process.env.DB_HOST === undefined) {
+        return undefined
+    }
+    return new RotatingEncryptionTransformer(getEncryptionKeys())
+}
+
+// eslint-disable-next-line no-control-regex -- matching control characters is the point
+const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/
+
+function decodeText(bytes: Buffer): string | undefined {
+    let text: string
+    try {
+        text = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+    } catch {
+        return undefined
+    }
+    return CONTROL_CHARACTERS.test(text) ? undefined : text
+}

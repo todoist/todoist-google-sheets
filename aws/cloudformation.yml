@@ -149,6 +149,9 @@ Resources:
                         ValueFrom: 'arn:aws:secretsmanager:us-east-1:011833101604:secret:integrations/todoist-google-sheets/secrets-4oa5bD:GOOGLE_CLIENT_SECRET::'
                       - Name: DB_ENCRYPTION_KEY
                         ValueFrom: 'arn:aws:secretsmanager:us-east-1:011833101604:secret:integrations/todoist-google-sheets/secrets-4oa5bD:DB_ENCRYPTION_KEY::'
+                      # Read-only second key while DB_ENCRYPTION_KEY is rotated to DB_ENCRYPTION_KEY2.
+                      - Name: DB_ENCRYPTION_FALLBACK_KEY
+                        ValueFrom: 'arn:aws:secretsmanager:us-east-1:011833101604:secret:integrations/todoist-google-sheets/secrets-4oa5bD:DB_ENCRYPTION_KEY2::'
                       - Name: DB_ENCRYPTION_ALGORITHM
                         ValueFrom: 'arn:aws:secretsmanager:us-east-1:011833101604:secret:integrations/todoist-google-sheets/secrets-4oa5bD:DB_ENCRYPTION_ALGORITHM::'
                       - Name: DB_ENCRYPTION_IV_LENGTH
