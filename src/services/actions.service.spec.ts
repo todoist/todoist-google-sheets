@@ -1,4 +1,4 @@
-import { Section, Task, TodoistApi } from '@doist/todoist-api-typescript'
+import { Section, Task, TodoistApi } from '@doist/todoist-sdk'
 import { CoreModule, StateService } from '@doist/ui-extensions-server'
 
 import { HttpModule } from '@nestjs/axios'
@@ -315,7 +315,7 @@ describe('ActionsService', () => {
                 id: 'parent1',
                 projectId: '1234',
                 content: 'Parent Task',
-                isCompleted: false,
+                checked: false,
             } as Task
 
             jest.spyOn(TodoistApi.prototype, 'getTasks').mockImplementation(() =>
@@ -338,14 +338,14 @@ describe('ActionsService', () => {
                     projectId: '1234',
                     content: 'Subtask 1',
                     description: '',
-                    isCompleted: true,
+                    checked: true,
                 },
                 {
                     id: 'sub2',
                     projectId: '1234',
                     content: 'Subtask 2',
                     description: '',
-                    isCompleted: true,
+                    checked: true,
                 },
             ] as Task[]
 
@@ -410,9 +410,11 @@ describe('ActionsService', () => {
                     isCollapsed: false,
                     isArchived: false,
                     archivedAt: null,
-                    addedAt: '2024-01-01T00:00:00Z',
-                    updatedAt: '2024-01-01T00:00:00Z',
+                    addedAt: new Date('2024-01-01T00:00:00Z'),
+                    updatedAt: new Date('2024-01-01T00:00:00Z'),
                     sectionOrder: 1,
+                    description: null,
+                    url: 'https://todoist.com/showSection?id=section1',
                 },
             ]
             jest.spyOn(TodoistApi.prototype, 'getSections').mockImplementation(() =>
@@ -431,10 +433,10 @@ describe('ActionsService', () => {
                         projectId: '1234',
                         sectionId: 'section1',
                         content: 'Task 1',
-                        isCompleted: true,
+                        checked: true,
                     },
                 }),
-                completedAt: '2020-09-25T12:00:00Z',
+                completedAt: new Date('2020-09-25T12:00:00Z'),
             }
 
             const getCompletedTasks = jest
@@ -483,7 +485,10 @@ describe('ActionsService', () => {
                         ['taskId', 'taskName', 'sectionId', 'parentTaskId', 'completedDate'].join(
                             DELIMITER,
                         ),
-                        ['task1', 'Task 1', 'section1', '', '2020-09-25T12:00:00Z'].join(DELIMITER),
+                        // The SDK parses dates, so they're written back in full ISO 8601, with milliseconds.
+                        ['task1', 'Task 1', 'section1', '', '2020-09-25T12:00:00.000Z'].join(
+                            DELIMITER,
+                        ),
                     ].join('\n'),
                 }),
             )
@@ -510,12 +515,12 @@ describe('ActionsService', () => {
                 ]),
             )
 
-            const rootTask = { id: 'task1', projectId: '1234', isCompleted: true } as Task
+            const rootTask = { id: 'task1', projectId: '1234', checked: true } as Task
             const sectionTask = {
                 id: 'task2',
                 projectId: '1234',
                 sectionId: 'section1',
-                isCompleted: true,
+                checked: true,
             } as Task
 
             jest.spyOn(TodoistService.prototype, 'getCompletedTasks').mockImplementation(
@@ -573,7 +578,7 @@ describe('ActionsService', () => {
                 projectId: '1234',
                 content: 'Parent Task',
                 description: '',
-                isCompleted: false,
+                checked: false,
             } as Task
             jest.spyOn(TodoistApi.prototype, 'getTasks').mockImplementation(() =>
                 Promise.resolve({ results: [parentTask], nextCursor: null }),
@@ -599,7 +604,7 @@ describe('ActionsService', () => {
                     projectId: '1234',
                     content: 'Subtask 1',
                     description: '',
-                    isCompleted: true,
+                    checked: true,
                 },
             ] as Task[]
 
@@ -609,7 +614,7 @@ describe('ActionsService', () => {
                     projectId: '1234',
                     content: 'Sub-subtask 1',
                     description: '',
-                    isCompleted: true,
+                    checked: true,
                 },
             ] as Task[]
 
