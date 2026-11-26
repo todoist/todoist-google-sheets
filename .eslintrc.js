@@ -17,6 +17,9 @@ module.exports = {
     rules: {
         '@typescript-eslint/no-useless-constructor': 'error',
         '@typescript-eslint/no-unnecessary-condition': 'error',
+        // @doist/todoist-sdk only declares `exports`, which this resolver doesn't read. TypeScript
+        // still checks that the import resolves.
+        'import/no-unresolved': ['error', { ignore: ['^@doist/todoist-sdk$'] }],
         'no-restricted-imports': [
             'error',
             {

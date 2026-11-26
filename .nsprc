@@ -244,11 +244,6 @@
         "notes": "minimatch DoS via globparts amplification - from typeorm dependency; fixed by the TypeORM 1.x upgrade",
         "expiry": "2027/02/28"
     },
-    "1243066": {
-        "active": true,
-        "notes": "zod memory exhaustion on oversized constrained collections - via @doist/todoist-api-typescript; fixed by moving to @doist/todoist-sdk (#278)",
-        "expiry": "2027/02/28"
-    },
     "1243453": {
         "active": true,
         "notes": "hbs sensitive information exposure - via @doist/ui-extensions-server > hbs; no fixed hbs version yet (affects <=4.4.0, the latest)",
