@@ -29,31 +29,44 @@ type Values = Omit<Row, 'id'>
 /**
  * Stands in for MySQL: serves the three queries the re-encryption runs against an in-memory table.
  */
-function createQueryRunner(rows: Row[]) {
+function createQueryRunner(rows: Row[], options: { afterSelect?: () => void } = {}) {
     const query = jest.fn((sql: string, params: unknown[] = []) => {
         if (sql.startsWith('SELECT COUNT(*)')) {
             return Promise.resolve([{ count: String(rows.length) }])
         }
         if (sql.startsWith('SELECT')) {
             const [lastId, limit] = params as [number, number]
-            return Promise.resolve(
-                rows
-                    .filter((row) => row.id > lastId)
-                    .sort((a, b) => a.id - b.id)
-                    .slice(0, limit)
-                    .map((row) => ({ ...row })),
-            )
+            const page = rows
+                .filter((row) => row.id > lastId)
+                .sort((a, b) => a.id - b.id)
+                .slice(0, limit)
+                .map((row) => ({ ...row }))
+            // Lets a test change rows after they were read, as another task saving them would.
+            options.afterSelect?.()
+            return Promise.resolve(page)
         }
         if (sql.startsWith('UPDATE')) {
-            // Params: for each column, (id, value) per row; then the ids for `WHERE id IN`.
-            const rowCount = params.length / (COLUMNS.length * 2 + 1)
+            // Params: for each column, (id, new value) per row; the ids for `WHERE id IN`; then, per
+            // row, its id and the values that were read, which the row must still hold.
+            const rowCount = params.length / (COLUMNS.length * 2 + 1 + 1 + COLUMNS.length)
+            const conditionOffset = COLUMNS.length * rowCount * 2 + rowCount
+            const unchanged = new Set<number>()
+            for (let i = 0; i < rowCount; i++) {
+                const offset = conditionOffset + i * (1 + COLUMNS.length)
+                const id = params[offset] as number
+                const row = rows.find((r) => r.id === id)
+                // Null-safe comparison, like MySQL's `<=>`.
+                if (row && COLUMNS.every((column, c) => row[column] === params[offset + 1 + c])) {
+                    unchanged.add(id)
+                }
+            }
             COLUMNS.forEach((column, columnIndex) => {
                 const offset = columnIndex * rowCount * 2
                 for (let i = 0; i < rowCount; i++) {
                     const id = params[offset + i * 2] as number
                     const value = params[offset + i * 2 + 1] as string | null
                     const row = rows.find((r) => r.id === id)
-                    if (row) {
+                    if (row && unchanged.has(id)) {
                         row[column] = value
                     }
                 }
@@ -156,6 +169,57 @@ describe('re-encrypting users', () => {
             await reEncryptUsers(queryRunner, logger)
 
             expect(decryptRow(row, newTransformer)).toEqual({ id: 1, ...ONE })
+        })
+
+        it('only updates rows that still hold the values it read, comparing NULLs safely', async () => {
+            const rows = [encryptedRow(1, ONE), encryptedRow(2, TWO)]
+            const read = rows.map((row) => ({ ...row }))
+            const { queryRunner, query } = createQueryRunner(rows)
+
+            await reEncryptUsers(queryRunner, logger)
+
+            const [sql, params] = updateCalls(query)[0] as [string, unknown[]]
+            expect(sql).toContain('`authToken` <=> ?')
+            expect(sql).toContain('`name` <=> ?')
+            // The condition carries each row's id and the values that were read, NULLs included.
+            expect(params.slice(-10)).toEqual([
+                1,
+                read[0]!.authToken,
+                read[0]!.refreshToken,
+                read[0]!.emailAddress,
+                read[0]!.name,
+                2,
+                read[1]!.authToken,
+                null,
+                null,
+                null,
+            ])
+            // Row 2, with three NULL columns, was still re-encrypted.
+            expect(decryptRow(rows[1]!, newTransformer)).toEqual({ id: 2, ...TWO })
+        })
+
+        it("doesn't overwrite a row saved after it was read", async () => {
+            const row = encryptedRow(1, ONE)
+            const storedRefreshToken = row.refreshToken
+            const other = encryptedRow(2, TWO)
+            const refreshed = oldTransformer.to('access-refreshed') as string
+            const { queryRunner } = createQueryRunner([row, other], {
+                // An old task still serving the previous deploy refreshes the token meanwhile.
+                afterSelect: () => {
+                    row.authToken = refreshed
+                },
+            })
+
+            const result = await reEncryptUsers(queryRunner, logger)
+
+            // The fresh token survives (still on the old key, for the next sweep to re-encrypt)...
+            expect(row.authToken).toEqual(refreshed)
+            expect(row.refreshToken).toEqual(storedRefreshToken)
+            expect(oldTransformer.from(row.authToken)).toEqual('access-refreshed')
+            // ...while the untouched row is re-encrypted as usual.
+            expect(decryptRow(other, newTransformer)).toEqual({ id: 2, ...TWO })
+            // Both rows still count as needing re-encryption.
+            expect(result).toEqual({ rowsTotal: 2, rowsReEncrypted: 2 })
         })
 
         it('reads and writes in batches, one UPDATE per batch', async () => {

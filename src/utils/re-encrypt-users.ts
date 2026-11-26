@@ -53,7 +53,7 @@ export async function reEncryptUsers(
 
         const updates = rows.flatMap((row) => {
             const reEncrypted = reEncryptRow(row, transformer)
-            return reEncrypted ? [reEncrypted] : []
+            return reEncrypted ? [{ original: row, updated: reEncrypted }] : []
         })
         if (updates.length > 0) {
             await updateRows(queryRunner, updates)
@@ -107,17 +107,38 @@ function reEncryptRow(row: UserRow, transformer: RotatingEncryptionTransformer):
     return updated
 }
 
-async function updateRows(queryRunner: QueryRunner, rows: UserRow[]): Promise<void> {
+/**
+ * Writes the re-encrypted rows, one `UPDATE` per batch. A row is only written if it still holds the
+ * values that were read: an old task still serving during the deploy may have saved it since (a
+ * token refresh or a sign-in), and its newer values must win. Those rows were saved with the old
+ * key, so the sweep in the next deploy re-encrypts them.
+ */
+async function updateRows(
+    queryRunner: QueryRunner,
+    rows: { original: UserRow; updated: UserRow }[],
+): Promise<void> {
     const cases = ENCRYPTED_USER_COLUMNS.map(
         (column) => `\`${column}\` = CASE \`id\` ${rows.map(() => 'WHEN ? THEN ?').join(' ')} END`,
     ).join(', ')
+    // `<=>` is MySQL's null-safe equality: refreshToken, emailAddress and name can be NULL, and with
+    // `=` a row with any NULL column would never match, so it would never be re-encrypted.
+    const sameValues = ENCRYPTED_USER_COLUMNS.map((column) => `\`${column}\` <=> ?`).join(' AND ')
+    const unchanged = `CASE \`id\` ${rows.map(() => `WHEN ? THEN ${sameValues}`).join(' ')} END`
     const params = [
-        ...ENCRYPTED_USER_COLUMNS.flatMap((column) => rows.flatMap((row) => [row.id, row[column]])),
-        ...rows.map((row) => row.id),
+        ...ENCRYPTED_USER_COLUMNS.flatMap((column) =>
+            rows.flatMap(({ updated }) => [updated.id, updated[column]]),
+        ),
+        ...rows.map(({ original }) => original.id),
+        ...rows.flatMap(({ original }) => [
+            original.id,
+            ...ENCRYPTED_USER_COLUMNS.map((column) => original[column]),
+        ]),
     ]
 
     await queryRunner.query(
-        `UPDATE \`user\` SET ${cases} WHERE \`id\` IN (${rows.map(() => '?').join(', ')})`,
+        `UPDATE \`user\` SET ${cases} WHERE \`id\` IN (${rows
+            .map(() => '?')
+            .join(', ')}) AND ${unchanged}`,
         params,
     )
 }
