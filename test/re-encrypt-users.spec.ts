@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common'
 import { EncryptionTransformer } from 'typeorm-encrypted'
 
 import { ReEncryptUsersWithKey21795681180350 } from '../src/migrations/1795681180350-re-encrypt-users-with-key2'
+import { ReEncryptRemainingUsers1795681352903 } from '../src/migrations/1795681352903-re-encrypt-remaining-users'
 import { BATCH_SIZE, reEncryptUsers } from '../src/utils/re-encrypt-users'
 
 import type { QueryRunner } from 'typeorm'
@@ -308,6 +309,29 @@ describe('re-encrypting users', () => {
             const { queryRunner, query } = createQueryRunner([row])
 
             await new ReEncryptUsersWithKey21795681180350().up(queryRunner)
+
+            expect(updateCalls(query)).toHaveLength(0)
+        })
+    })
+
+    describe('ReEncryptRemainingUsers1795681352903', () => {
+        it('re-encrypts rows written with the old key during the previous rollout', async () => {
+            const straggler = encryptedRow(2, TWO)
+            const rows = [encryptedRow(1, ONE, newTransformer), straggler]
+            const { queryRunner } = createQueryRunner(rows)
+
+            await new ReEncryptRemainingUsers1795681352903().up(queryRunner)
+
+            expect(rows.map((row) => decryptRow(row, newTransformer))).toEqual([
+                { id: 1, ...ONE },
+                { id: 2, ...TWO },
+            ])
+        })
+
+        it('succeeds without writing when every row is already on the current key', async () => {
+            const { queryRunner, query } = createQueryRunner([encryptedRow(1, ONE, newTransformer)])
+
+            await new ReEncryptRemainingUsers1795681352903().up(queryRunner)
 
             expect(updateCalls(query)).toHaveLength(0)
         })
