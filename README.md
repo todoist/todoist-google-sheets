@@ -46,6 +46,26 @@ There's also the option to let typeorm generate the migration for you automatica
 you need to run `npm run migration:generate ./src/migrations/<name>` (name should be the migration name you want to give it, don't include spaces).
 For more information, visit https://typeorm.io/#/migrations
 
+### Rotating `DB_ENCRYPTION_KEY`
+
+`DB_ENCRYPTION_KEY` encrypts the `user` table's `authToken`, `refreshToken`, `emailAddress` and `name` columns (`aes-256-cbc`, through `@doist/ui-extensions-server`). Since the November 2026 rotation, production loads it from the `DB_ENCRYPTION_KEY2` field of the `integrations/todoist-google-sheets/secrets-4oa5bD` secret.
+
+To rotate it again, follow the November 2026 rotation: four deploys, each merged only after the previous one has deployed.
+
+1. [#291](https://github.com/todoist/todoist-google-sheets/pull/291): read with either key. A transformer decrypts with `DB_ENCRYPTION_KEY` or `DB_ENCRYPTION_FALLBACK_KEY` and still encrypts with the old key; the new key is loaded as the fallback.
+2. [#290](https://github.com/todoist/todoist-google-sheets/pull/290): swap the keys and re-encrypt every row in a startup migration.
+3. [#292](https://github.com/todoist/todoist-google-sheets/pull/292): re-encrypt rows that old tasks wrote with the old key during step 2's rollout.
+4. [#294](https://github.com/todoist/todoist-google-sheets/pull/294): remove the fallback key and the rotation code. Only after this deploys, delete the old key's field from the secret.
+
+Every version can read what the versions before and after it write, so tasks still running the old version during a deploy, and an automatic rollback, never lose access to a row.
+
+Things to know:
+
+-   Add the new key as a new field in the secret (for example `DB_ENCRYPTION_KEY3`) rather than overwriting the current one, so the old key stays available until step 4.
+-   `aes-256-cbc` has no integrity check: about 1 in 256 decryptions with the wrong key "succeed" with random bytes. Only accept a result that's valid UTF-8 with no control characters.
+-   TypeORM keeps a parent entity's column over a subclass's redeclaration of it, so changing the library's `User` columns takes a copy of the entity, not a subclass.
+-   Those PRs' Test Plans run the whole rotation locally against a throwaway MySQL, with dummy keys.
+
 ### Google App developer account setup
 
 1. Create a new Google app (click the dropdown next to the page title, then choose New Project) [link](https://console.cloud.google.com/apis/dashboard)
