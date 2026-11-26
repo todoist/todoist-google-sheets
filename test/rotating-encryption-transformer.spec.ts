@@ -216,6 +216,22 @@ describe('getEncryptionKeys', () => {
         expect(getEncryptionKeys()).toEqual([NEW, OLD])
     })
 
+    it('trims whitespace around the keys, reading values written with the untrimmed key', () => {
+        process.env.DB_ENCRYPTION_KEY = `${NEW_KEY}\n`
+        process.env.DB_ENCRYPTION_FALLBACK_KEY = ` ${OLD_KEY} `
+
+        expect(getEncryptionKeys()).toEqual([NEW, OLD])
+
+        // Today's code hands the untrimmed value straight to typeorm-encrypted.
+        const writtenToday = new EncryptionTransformer({
+            ...OPTIONS,
+            key: `${NEW_KEY}\n`,
+        }).to('secret') as string
+        expect(new RotatingEncryptionTransformer(getEncryptionKeys()).from(writtenToday)).toEqual(
+            'secret',
+        )
+    })
+
     it('ignores a fallback key equal to the current one', () => {
         process.env.DB_ENCRYPTION_FALLBACK_KEY = NEW_KEY
 

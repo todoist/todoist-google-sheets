@@ -107,8 +107,10 @@ export function getEncryptionKeys(): [EncryptionOptions, ...EncryptionOptions[]]
     const ivLength = Number(
         validateEnv(process.env.DB_ENCRYPTION_IV_LENGTH, 'DB_ENCRYPTION_IV_LENGTH'),
     )
-    const currentKey = validateEnv(process.env.DB_ENCRYPTION_KEY, 'DB_ENCRYPTION_KEY')
-    const fallbackKey = process.env.DB_ENCRYPTION_FALLBACK_KEY
+    // Trimmed so a stray newline or space in the secret doesn't fail validateKey. It's the same key:
+    // typeorm-encrypted's Buffer.from(key, 'hex') already stopped at the first non-hex character.
+    const currentKey = validateEnv(process.env.DB_ENCRYPTION_KEY, 'DB_ENCRYPTION_KEY').trim()
+    const fallbackKey = process.env.DB_ENCRYPTION_FALLBACK_KEY?.trim()
 
     const current = { key: currentKey, algorithm, ivLength }
     return fallbackKey && fallbackKey !== currentKey
