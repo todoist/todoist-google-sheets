@@ -9,7 +9,7 @@ import { TodoistService } from '../../src/services/todoist.service'
 import { buildUser } from '../fixtures'
 import { setupGetGoogleToken, setupGetTasks, setupGetUser } from '../setups'
 
-import { createTestApp } from './helpers'
+import { createTestApp, httpServer } from './helpers'
 
 import type { DoistCardResponse } from '@doist/ui-extensions-core'
 import type { INestApplication } from '@nestjs/common'
@@ -54,7 +54,7 @@ describe('export e2e tests', () => {
             nextCursor: null,
         })
 
-        return request(app.getHttpServer())
+        return request(httpServer(app))
             .post('/process')
             .set(TODOIST_APP_TOKEN_HEADER, 'kwijibo')
             .send({
@@ -87,7 +87,7 @@ describe('export e2e tests', () => {
         setupGetUser(buildUser())
         setupGetGoogleToken('token')
 
-        return request(app.getHttpServer())
+        return request(httpServer(app))
             .post('/process')
             .set(TODOIST_APP_TOKEN_HEADER, 'kwijibo')
             .send({
@@ -124,7 +124,7 @@ describe('export e2e tests', () => {
             throw new Error('Error talking to Todoist')
         })
 
-        return request(app.getHttpServer())
+        return request(httpServer(app))
             .post('/process')
             .set(TODOIST_APP_TOKEN_HEADER, 'kwijibo')
 
@@ -166,7 +166,7 @@ describe('export e2e tests', () => {
             throw new Error('Generic error talking to Google')
         })
 
-        return request(app.getHttpServer())
+        return request(httpServer(app))
             .post('/process')
             .set(TODOIST_APP_TOKEN_HEADER, 'kwijibo')
             .send({

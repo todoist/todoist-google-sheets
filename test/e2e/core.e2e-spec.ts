@@ -2,7 +2,7 @@ import request from 'supertest'
 
 import { setupGetUser } from '../setups'
 
-import { createTestApp } from './helpers'
+import { createTestApp, httpServer } from './helpers'
 
 import type { DoistCardExtensionType, DoistCardResponse } from '@doist/ui-extensions-core'
 import type { INestApplication } from '@nestjs/common'
@@ -18,7 +18,7 @@ describe('Core e2e tests', () => {
         app = appModule
     })
 
-    it('/GET /ping', () => request(app.getHttpServer()).get('/ping').expect(200).expect('pong'))
+    it('/GET /ping', () => request(httpServer(app)).get('/ping').expect(200).expect('pong'))
 
     it('runs the server without crashing', () => expect(app.getHttpServer()).toBeDefined())
 
@@ -26,7 +26,7 @@ describe('Core e2e tests', () => {
         'returns the login card (assuming first run)',
         (extensionType: DoistCardExtensionType) => {
             setupGetUser(undefined)
-            return request(app.getHttpServer())
+            return request(httpServer(app))
                 .post('/process')
                 .send({
                     context: { user: { id: 42 }, theme: 'light' },
@@ -60,7 +60,7 @@ describe('Core e2e tests', () => {
             authToken: 'kwijibo',
         } as User)
 
-        return request(app.getHttpServer())
+        return request(httpServer(app))
             .post('/process')
             .send({
                 context: { user: { id: 42 }, theme: 'light' },

@@ -1,8 +1,11 @@
+/**
+ * @jest-environment node
+ */
 import { HttpModule } from '@nestjs/axios'
 import { Test } from '@nestjs/testing'
 import { chunk } from 'lodash'
 import MockDate from 'mockdate'
-import { rest } from 'msw'
+import { http, HttpResponse } from 'msw'
 
 import { server } from '../../test/server'
 
@@ -55,11 +58,11 @@ describe('TodoistService', () => {
             const capturedParams: URLSearchParams[] = []
 
             server.use(
-                rest.get(
+                http.get(
                     'https://api.todoist.com/api/v1/tasks/completed/by_completion_date',
-                    (req, res, ctx) => {
-                        capturedParams.push(req.url.searchParams)
-                        return res(ctx.json({ items: [] }))
+                    ({ request }) => {
+                        capturedParams.push(new URL(request.url).searchParams)
+                        return HttpResponse.json({ items: [] })
                     },
                 ),
             )
@@ -80,11 +83,11 @@ describe('TodoistService', () => {
             let windowCount = 0
 
             server.use(
-                rest.get(
+                http.get(
                     'https://api.todoist.com/api/v1/tasks/completed/by_completion_date',
-                    (_req, res, ctx) => {
+                    () => {
                         windowCount++
-                        return res(ctx.json({ items: [] }))
+                        return HttpResponse.json({ items: [] })
                     },
                 ),
             )
@@ -100,18 +103,16 @@ describe('TodoistService', () => {
             let windowCount = 0
 
             server.use(
-                rest.get(
+                http.get(
                     'https://api.todoist.com/api/v1/tasks/completed/by_completion_date',
-                    (_req, res, ctx) => {
+                    () => {
                         windowCount++
                         if (windowCount === 1) {
-                            return res(
-                                ctx.json({
-                                    items: [{} as SyncTask, {} as SyncTask, {} as SyncTask],
-                                }),
-                            )
+                            return HttpResponse.json({
+                                items: [{} as SyncTask, {} as SyncTask, {} as SyncTask],
+                            })
                         }
-                        return res(ctx.json({ items: [] }))
+                        return HttpResponse.json({ items: [] })
                     },
                 ),
             )
@@ -131,20 +132,20 @@ describe('TodoistService', () => {
             let windowCount = 0
 
             server.use(
-                rest.get(
+                http.get(
                     'https://api.todoist.com/api/v1/tasks/completed/by_completion_date',
-                    (_req, res, ctx) => {
+                    () => {
                         windowCount++
                         if (windowCount === 1) {
-                            return res(ctx.json({ items: [{} as SyncTask] }))
+                            return HttpResponse.json({ items: [{} as SyncTask] })
                         }
                         if (windowCount === 2) {
-                            return res(ctx.json({ items: [] }))
+                            return HttpResponse.json({ items: [] })
                         }
                         if (windowCount === 3) {
-                            return res(ctx.json({ items: [{} as SyncTask] }))
+                            return HttpResponse.json({ items: [{} as SyncTask] })
                         }
-                        return res(ctx.json({ items: [] }))
+                        return HttpResponse.json({ items: [] })
                     },
                 ),
             )
@@ -164,24 +165,24 @@ describe('TodoistService', () => {
             let windowCount = 0
 
             server.use(
-                rest.get(
+                http.get(
                     'https://api.todoist.com/api/v1/tasks/completed/by_completion_date',
-                    (_req, res, ctx) => {
+                    () => {
                         windowCount++
                         // Window 1: items found
                         if (windowCount === 1) {
-                            return res(ctx.json({ items: [{} as SyncTask] }))
+                            return HttpResponse.json({ items: [{} as SyncTask] })
                         }
                         // Window 2: empty (consecutive = 1)
                         if (windowCount === 2) {
-                            return res(ctx.json({ items: [] }))
+                            return HttpResponse.json({ items: [] })
                         }
                         // Window 3: items found again (resets consecutive counter)
                         if (windowCount === 3) {
-                            return res(ctx.json({ items: [{} as SyncTask] }))
+                            return HttpResponse.json({ items: [{} as SyncTask] })
                         }
                         // Window 4+: empty
-                        return res(ctx.json({ items: [] }))
+                        return HttpResponse.json({ items: [] })
                     },
                 ),
             )
@@ -288,29 +289,27 @@ describe('TodoistService', () => {
             let callCount = 0
 
             server.use(
-                rest.get(
+                http.get(
                     'https://api.todoist.com/api/v1/tasks/completed/by_completion_date',
-                    (req, res, ctx) => {
-                        const cursor = req.url.searchParams.get('cursor')
+                    ({ request }) => {
+                        const cursor = new URL(request.url).searchParams.get('cursor')
 
                         if (!cursor) {
                             callCount++
                             if (callCount === 1) {
-                                return res(
-                                    ctx.json({
-                                        items: page1Items,
-                                        next_cursor: 'page2',
-                                    }),
-                                )
+                                return HttpResponse.json({
+                                    items: page1Items,
+                                    next_cursor: 'page2',
+                                })
                             }
-                            return res(ctx.json({ items: [] }))
+                            return HttpResponse.json({ items: [] })
                         }
 
                         if (cursor === 'page2') {
-                            return res(ctx.json({ items: page2Items }))
+                            return HttpResponse.json({ items: page2Items })
                         }
 
-                        return res(ctx.json({ items: [] }))
+                        return HttpResponse.json({ items: [] })
                     },
                 ),
             )
@@ -326,10 +325,10 @@ describe('TodoistService', () => {
 
         it('should return empty array and log error when API fails', async () => {
             server.use(
-                rest.get(
+                http.get(
                     'https://api.todoist.com/api/v1/tasks/completed/by_completion_date',
-                    (_req, res, ctx) => {
-                        return res(ctx.status(400))
+                    () => {
+                        return new HttpResponse(null, { status: 400 })
                     },
                 ),
             )
@@ -354,10 +353,10 @@ describe('TodoistService', () => {
             let capturedAuthHeader: string | undefined
 
             server.use(
-                rest.post('https://api.todoist.com/api/v1/sync', async (req, res, ctx) => {
-                    capturedBody = await req.json()
-                    capturedAuthHeader = req.headers.get('Authorization') ?? undefined
-                    return res(ctx.json({ completed_info: completedInfo }))
+                http.post('https://api.todoist.com/api/v1/sync', async ({ request }) => {
+                    capturedBody = (await request.json()) as Record<string, string>
+                    capturedAuthHeader = request.headers.get('Authorization') ?? undefined
+                    return HttpResponse.json({ completed_info: completedInfo })
                 }),
             )
 
@@ -373,8 +372,8 @@ describe('TodoistService', () => {
 
         it('should return an empty array when the sync endpoint fails', async () => {
             server.use(
-                rest.post('https://api.todoist.com/api/v1/sync', (_req, res, ctx) => {
-                    return res(ctx.status(500))
+                http.post('https://api.todoist.com/api/v1/sync', () => {
+                    return new HttpResponse(null, { status: 500 })
                 }),
             )
 
@@ -389,21 +388,19 @@ describe('TodoistService', () => {
         const totalPages = allTasks.length
 
         server.use(
-            rest.get(
+            http.get(
                 'https://api.todoist.com/api/v1/tasks/completed/by_completion_date',
-                (req, res, ctx) => {
-                    const cursor = req.url.searchParams.get('cursor')
+                ({ request }) => {
+                    const cursor = new URL(request.url).searchParams.get('cursor')
                     const pageIndex = cursor ? parseInt(cursor, 10) : 0
                     const tasks = allTasks[pageIndex] ?? []
                     const hasMore = pageIndex < totalPages - 1
                     const nextCursor = hasMore ? (pageIndex + 1).toString() : null
 
-                    return res(
-                        ctx.json({
-                            items: tasks,
-                            ...(nextCursor ? { next_cursor: nextCursor } : {}),
-                        }),
-                    )
+                    return HttpResponse.json({
+                        items: tasks,
+                        ...(nextCursor ? { next_cursor: nextCursor } : {}),
+                    })
                 },
             ),
         )
@@ -423,25 +420,23 @@ describe('TodoistService', () => {
         const requestedSince: Date[] = []
 
         server.use(
-            rest.get(
+            http.get(
                 'https://api.todoist.com/api/v1/tasks/completed/by_completion_date',
-                (req, res, ctx) => {
-                    const since = new Date(req.url.searchParams.get('since') ?? '')
-                    const until = new Date(req.url.searchParams.get('until') ?? '')
+                ({ request }) => {
+                    const since = new Date(new URL(request.url).searchParams.get('since') ?? '')
+                    const until = new Date(new URL(request.url).searchParams.get('until') ?? '')
                     requestedSince.push(since)
 
                     if (failUntilBefore && until < new Date(failUntilBefore)) {
-                        return res(ctx.status(500))
+                        return new HttpResponse(null, { status: 500 })
                     }
 
-                    return res(
-                        ctx.json({
-                            items: items.filter((item) => {
-                                const completedAt = new Date(item.completed_at)
-                                return completedAt >= since && completedAt < until
-                            }),
+                    return HttpResponse.json({
+                        items: items.filter((item) => {
+                            const completedAt = new Date(item.completed_at)
+                            return completedAt >= since && completedAt < until
                         }),
-                    )
+                    })
                 },
             ),
         )
