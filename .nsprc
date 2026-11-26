@@ -74,21 +74,6 @@
         "notes": "minimatch ReDoS via nested extglobs - from typeorm dependency",
         "expiry": "2026/06/30"
     },
-    "1113635": {
-        "active": true,
-        "notes": "Multer DoS via incomplete cleanup - requires dependency updates",
-        "expiry": "2027/01/31"
-    },
-    "1113636": {
-        "active": true,
-        "notes": "Multer DoS via resource exhaustion - requires dependency updates",
-        "expiry": "2027/01/31"
-    },
-    "1117063": {
-        "active": true,
-        "notes": "@nestjs/core Improperly Neutralizes Special Elements in Output Used by a Downstream Component ('Injection') - direct dependency",
-        "expiry": "2027/01/31"
-    },
     "1116672": {
         "active": true,
         "notes": "Axios has a NO_PROXY Hostname Normalization Bypass that Leads to SSRF - axios 0.21 via @doist/integrations-common",
@@ -189,16 +174,6 @@
         "notes": "Axios: Nested axios option objects can consume polluted prototype values - axios 0.21 via @doist/integrations-common",
         "expiry": "2027/01/31"
     },
-    "1114301": {
-        "active": true,
-        "notes": "file-type affected by infinite loop in ASF parser on malformed input with zero-size sub-header - via @nestjs/common",
-        "expiry": "2027/01/31"
-    },
-    "1114726": {
-        "active": true,
-        "notes": "file-type: ZIP Decompression Bomb DoS via [Content_Types].xml entry - via @nestjs/common",
-        "expiry": "2027/01/31"
-    },
     "1115538": {
         "active": true,
         "notes": "Handlebars.js has JavaScript Injection via AST Type Confusion by tampering @partial-block - via @doist/ui-extensions-server > hbs",
@@ -249,84 +224,14 @@
         "notes": "Handlebars: JavaScript Injection via Own Property Check Bypass - via @doist/ui-extensions-server > hbs",
         "expiry": "2027/01/31"
     },
-    "1115806": {
-        "active": true,
-        "notes": "lodash vulnerable to Code Injection via `_.template` imports key names - direct dependency and via @nestjs/config",
-        "expiry": "2027/01/31"
-    },
-    "1113996": {
-        "active": true,
-        "notes": "Multer Vulnerable to Denial of Service via Uncontrolled Recursion - via @nestjs/platform-express",
-        "expiry": "2027/01/31"
-    },
-    "1121089": {
-        "active": true,
-        "notes": "Multer vulnerable to Denial of Service via deeply nested field names - via @nestjs/platform-express",
-        "expiry": "2027/01/31"
-    },
-    "1121091": {
-        "active": true,
-        "notes": "Multer vulnerable to Denial of Service via incomplete cleanup of aborted uploads - via @nestjs/platform-express",
-        "expiry": "2027/01/31"
-    },
-    "1193790": {
-        "active": true,
-        "notes": "multer vulnerable to Denial of Service via crafted multipart field names - via @nestjs/platform-express",
-        "expiry": "2027/01/31"
-    },
-    "1193793": {
-        "active": true,
-        "notes": "multer vulnerable to Denial of Service via oversized array index in field names - via @nestjs/platform-express",
-        "expiry": "2027/01/31"
-    },
-    "1115527": {
-        "active": true,
-        "notes": "path-to-regexp vulnerable to Regular Expression Denial of Service via multiple route parameters - via express",
-        "expiry": "2027/01/31"
-    },
-    "1113719": {
-        "active": true,
-        "notes": "qs's arrayLimit bypass in its bracket notation allows DoS via memory exhaustion - via @nestjs/platform-express and express",
-        "expiry": "2027/01/31"
-    },
-    "1119502": {
-        "active": true,
-        "notes": "qs has a remotely triggerable DoS: qs.stringify crashes with TypeError on null/undefined entries in comma-format arrays when encodeValuesOnly is set - via @nestjs/platform-express and express",
-        "expiry": "2027/01/31"
-    },
-    "1158507": {
-        "active": true,
-        "notes": "qs: Denial of Service via Attacker Controlled isBuffer - via @nestjs/platform-express and express",
-        "expiry": "2027/01/31"
-    },
     "1119441": {
         "active": true,
         "notes": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided - via @doist/todoist-api-typescript and @nestjs/typeorm",
         "expiry": "2027/01/31"
     },
-    "1243073": {
-        "active": true,
-        "notes": "body-parser DoS via trailing bytes after a compressed body - via @nestjs/platform-express; fixed by the NestJS 11 upgrade",
-        "expiry": "2027/02/28"
-    },
     "1243074": {
         "active": true,
         "notes": "body-parser DoS via trailing bytes after a compressed body - via @nestjs/platform-express; fixed by the NestJS 11 upgrade",
-        "expiry": "2027/02/28"
-    },
-    "1243083": {
-        "active": true,
-        "notes": "multer DoS via a pending asynchronous fileFilter - via @nestjs/platform-express; fixed by the NestJS 11 upgrade",
-        "expiry": "2027/02/28"
-    },
-    "1243687": {
-        "active": true,
-        "notes": "qs.stringify with arrayFormat comma throws on arrays - via @nestjs/platform-express and express; fixed by the NestJS 11 upgrade",
-        "expiry": "2027/02/28"
-    },
-    "1244531": {
-        "active": true,
-        "notes": "lodash prototype pollution in _.unset/_.omit/_.pull - via @nestjs/config; fixed by the @nestjs/config major upgrade",
         "expiry": "2027/02/28"
     },
     "1244013": {
@@ -347,6 +252,56 @@
     "1243453": {
         "active": true,
         "notes": "hbs sensitive information exposure - via @doist/ui-extensions-server > hbs; no fixed hbs version yet (affects <=4.4.0, the latest)",
+        "expiry": "2027/02/28"
+    },
+    "1111017": {
+        "active": true,
+        "notes": "Sentry sensitive headers leaked with sendDefaultPii - via @doist/ui-extensions-server 3.5.7, which pins @sentry/node 10.25.0; fixed when the library moves to @sentry/node >=10.27. The library's Sentry.init doesn't set sendDefaultPii or tracing, so it doesn't apply here",
+        "expiry": "2027/02/28"
+    },
+    "1111010": {
+        "active": true,
+        "notes": "Sentry (node-core) sensitive headers leaked with sendDefaultPii - via @doist/ui-extensions-server 3.5.7, which pins @sentry/node 10.25.0; fixed when the library moves to @sentry/node >=10.27. The library's Sentry.init doesn't set sendDefaultPii or tracing, so it doesn't apply here",
+        "expiry": "2027/02/28"
+    },
+    "1153174": {
+        "active": true,
+        "notes": "OpenTelemetry core unbounded memory in W3C Baggage propagation - via @doist/ui-extensions-server 3.5.7, which pins @sentry/node 10.25.0; fixed when the library moves to @sentry/node >=10.27. The library's Sentry.init doesn't set sendDefaultPii or tracing, so it doesn't apply here",
+        "expiry": "2027/02/28"
+    },
+    "1246705": {
+        "active": true,
+        "notes": "OpenTelemetry instrumentation-http writes sensitive information to logs - via @doist/ui-extensions-server 3.5.7, which pins @sentry/node 10.25.0; fixed when the library moves to @sentry/node >=10.27. The library's Sentry.init doesn't set sendDefaultPii or tracing, so it doesn't apply here",
+        "expiry": "2027/02/28"
+    },
+    "1241247": {
+        "active": true,
+        "notes": "OpenTelemetry instrumentation-pg exposes the database username in spans - via @doist/ui-extensions-server 3.5.7, which pins @sentry/node 10.25.0; fixed when the library moves to @sentry/node >=10.27. The library's Sentry.init doesn't set sendDefaultPii or tracing, so it doesn't apply here",
+        "expiry": "2027/02/28"
+    },
+    "1241248": {
+        "active": true,
+        "notes": "OpenTelemetry instrumentation-mysql2 exposes the database username in spans - via @doist/ui-extensions-server 3.5.7, which pins @sentry/node 10.25.0; fixed when the library moves to @sentry/node >=10.27. The library's Sentry.init doesn't set sendDefaultPii or tracing, so it doesn't apply here",
+        "expiry": "2027/02/28"
+    },
+    "1241249": {
+        "active": true,
+        "notes": "OpenTelemetry instrumentation-knex exposes the database username in spans - via @doist/ui-extensions-server 3.5.7, which pins @sentry/node 10.25.0; fixed when the library moves to @sentry/node >=10.27. The library's Sentry.init doesn't set sendDefaultPii or tracing, so it doesn't apply here",
+        "expiry": "2027/02/28"
+    },
+    "1241250": {
+        "active": true,
+        "notes": "OpenTelemetry instrumentation-mysql exposes the database username in spans - via @doist/ui-extensions-server 3.5.7, which pins @sentry/node 10.25.0; fixed when the library moves to @sentry/node >=10.27. The library's Sentry.init doesn't set sendDefaultPii or tracing, so it doesn't apply here",
+        "expiry": "2027/02/28"
+    },
+    "1241251": {
+        "active": true,
+        "notes": "OpenTelemetry instrumentation-mongoose exposes the database username in spans - via @doist/ui-extensions-server 3.5.7, which pins @sentry/node 10.25.0; fixed when the library moves to @sentry/node >=10.27. The library's Sentry.init doesn't set sendDefaultPii or tracing, so it doesn't apply here",
+        "expiry": "2027/02/28"
+    },
+    "1241253": {
+        "active": true,
+        "notes": "OpenTelemetry instrumentation-tedious exposes the database username in spans - via @doist/ui-extensions-server 3.5.7, which pins @sentry/node 10.25.0; fixed when the library moves to @sentry/node >=10.27. The library's Sentry.init doesn't set sendDefaultPii or tracing, so it doesn't apply here",
         "expiry": "2027/02/28"
     }
 }
